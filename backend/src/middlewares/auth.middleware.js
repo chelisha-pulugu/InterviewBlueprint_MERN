@@ -1,29 +1,43 @@
 const jwt = require("jsonwebtoken")
-const Blacklist = require("../models/blacklist.model")
+const tokenBlacklistModel = require("../models/blacklist.model")
 
 
-async function authUser(req,res,next){
-    const token = req.cookies.token
-    if(!token){
+
+async function authUser(req, res, next) {
+
+    const token = req.cookies?.token
+
+    if (!token) {
         return res.status(401).json({
-            message:"Unauthorized"
+            message: "Token not provided."
         })
     }
-    
-    const isBlacklisted = Blacklist.findOne({token})
-    if(isBlacklisted){
+
+    const isTokenBlacklisted = await tokenBlacklistModel.findOne({
+        token
+    })
+
+    if (isTokenBlacklisted) {
         return res.status(401).json({
-            message:"Token is blacklisted "
+            message: "token is invalid"
         })
     }
-    try{
-        const decoded = jwt.verify(token,process.env.JWT_SECRET)
+
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET)
+
         req.user = decoded
-        next()  
-    }catch(error){
+
+        next()
+
+    } catch (err) {
+
         return res.status(401).json({
-            message:"Unauthorized"
+            message: "Invalid token."
         })
     }
+
 }
- module.exports = {authUser}
+
+
+module.exports = { authUser }
